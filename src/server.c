@@ -163,10 +163,12 @@ void get_file(int fd, struct cache *cache, char *request_path)
 
     char filepath[4096];
     struct file_data *filedata;
+    snprintf(filepath, sizeof filepath, "%s%s", SERVER_ROOT, request_path);
+
+    printf("Server root: %s\n", SERVER_ROOT);
+    printf("File path: %s\n", filepath);
+
     char *mime_type;
-    char header[4 + strlen(request_path) + 10];
-    snprintf(filepath, sizeof filepath, "%s/%s", SERVER_ROOT, request_path);
-    sprintf(header, "GET %s HTTP/1.1\n", request_path);
 
     filedata = file_load(filepath);
     if (filedata == NULL)
@@ -177,9 +179,11 @@ void get_file(int fd, struct cache *cache, char *request_path)
     else
     {
         mime_type = mime_type_get(filepath);
-        send_response(fd, header, mime_type, filedata->data, filedata->size);
-        file_free(filedata);
+        printf("Mime type: %s\n", mime_type);
+        send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
     }
+
+    file_free(filedata);
 }
 
 /**
