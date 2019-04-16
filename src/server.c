@@ -142,6 +142,29 @@ void get_file(int fd, struct cache *cache, char *request_path)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+
+    // TODO: Check the cache for the path
+
+    char filepath[4096];
+    struct file_data *filedata;
+    char *mime_type;
+    char *header;
+    snprintf(filepath, sizeof filepath, "%s/%s", SERVER_ROOT, request_path);
+    sprintf(header, "GET %s HTTP/1.1\n", request_path);
+
+    filedata = file_load(filepath);
+    if (filedata == NULL)
+    {
+        // TODO: make this non-fatal
+        fprintf(stderr, "cannot find system 404 file\n");
+        exit(3);
+    }
+
+    mime_type = mime_type_get(filepath);
+
+    send_response(fd, header, mime_type, filedata->data, filedata->size);
+
+    file_free(filedata);
 }
 
 /**
@@ -155,6 +178,10 @@ char *find_start_of_body(char *header)
     ///////////////////
     // IMPLEMENT ME! // (Stretch)
     ///////////////////
+
+    char *body_addr;
+
+    return body_addr;
 }
 
 /**
@@ -179,13 +206,30 @@ void handle_http_request(int fd, struct cache *cache)
     ///////////////////
 
     // Read the first two components of the first line of the request
+    char method[16];
+    char path[2000];
+    char protocol[8];
+    sscanf(request, "%s %s %s", method, path, protocol);
 
     // If GET, handle the get endpoints
-
-    //    Check if it's /d20 and handle that special case
-    //    Otherwise serve the requested file by calling get_file()
-
-    // (Stretch) If POST, handle the post request
+    if (strcmp(method, "GET") == 0)
+    {
+        if (strcmp(path, "/d20") == 0)
+        {
+            // Check if it's /d20 and handle that special case
+            get_d20(fd);
+        }
+        else
+        {
+            // Otherwise serve the requested file by calling get_file()
+            get_file(fd, cache, path);
+        }
+    }
+    // TODO: POST
+    else
+    {
+        resp_404(fd);
+    }
 }
 
 /**
@@ -237,6 +281,8 @@ int main(void)
         // listenfd is still listening for new connections.
 
         handle_http_request(newfd, cache);
+
+        // resp_404(newfd);
 
         close(newfd);
     }
