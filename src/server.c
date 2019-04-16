@@ -100,11 +100,26 @@ void get_d20(int fd)
     // IMPLEMENT ME! //
     ///////////////////
 
+    srand(time(NULL));
+    int r = rand() % 20;
+    char rand_num[3];
+
+    if (r < 10)
+    {
+        sprintf(rand_num, "0%i", r);
+    }
+    else
+    {
+        sprintf(rand_num, "%i", r);
+    }
+
     // Use send_response() to send it back as text/plain data
 
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+
+    send_response(fd, "HTTP/1.1 200", "text/plain", rand_num, strlen(rand_num));
 }
 
 /**
@@ -148,7 +163,7 @@ void get_file(int fd, struct cache *cache, char *request_path)
     char filepath[4096];
     struct file_data *filedata;
     char *mime_type;
-    char *header;
+    char header[4 + strlen(request_path) + 10];
     snprintf(filepath, sizeof filepath, "%s/%s", SERVER_ROOT, request_path);
     sprintf(header, "GET %s HTTP/1.1\n", request_path);
 
@@ -208,8 +223,10 @@ void handle_http_request(int fd, struct cache *cache)
     // Read the first two components of the first line of the request
     char method[16];
     char path[2000];
-    char protocol[8];
-    sscanf(request, "%s %s %s", method, path, protocol);
+    sscanf(request, "%s %s", method, path);
+
+    // printf("\nMethod: %s\n", method);
+    // printf("Path: %s\n", path);
 
     // If GET, handle the get endpoints
     if (strcmp(method, "GET") == 0)
