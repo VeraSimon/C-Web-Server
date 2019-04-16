@@ -173,17 +173,16 @@ void get_file(int fd, struct cache *cache, char *request_path)
     filedata = file_load(filepath);
     if (filedata == NULL)
     {
-        fprintf(stderr, "cannot find file \"%s\"\n", request_path);
+        fprintf(stderr, "cannot find file \"%s\"\n\n", request_path);
         resp_404(fd);
     }
     else
     {
         mime_type = mime_type_get(filepath);
-        printf("Mime type: %s\n", mime_type);
+        printf("Mime type: %s\n\n", mime_type);
         send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
+        file_free(filedata);
     }
-
-    file_free(filedata);
 }
 
 /**
@@ -229,8 +228,8 @@ void handle_http_request(int fd, struct cache *cache)
     char uri_path[2000];
     sscanf(request, "%s %s", method, uri_path);
 
-    // printf("\nMethod: %s\n", method);
-    // printf("Path: %s\n", path);
+    printf("Method: %s\n", method);
+    printf("Path: %s\n", uri_path);
 
     // If GET, handle the get endpoints
     if (strcmp(method, "GET") == 0)
