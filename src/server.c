@@ -67,16 +67,16 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
     time(&uet);
     time_info = localtime(&uet);
 
-    sprintf(response, "%s\n"
-                      "Date: %s"
-                      "Connection: close\n"
-                      "Content-Length: %i\n"
-                      "Content-Type: %s\n"
-                      "\n"
-                      "%s",
-            header, asctime(time_info), content_length, content_type, body_content);
-
-    int response_length = strlen(response);
+    int response_length =
+        sprintf(response,
+                "%s\n"
+                "Date: %s"
+                "Connection: close\n"
+                "Content-Length: %i\n"
+                "Content-Type: %s\n"
+                "\n"
+                "%s",
+                header, asctime(time_info), content_length, content_type, body_content);
 
     // Send it all!
     int rv = send(fd, response, response_length, 0);
@@ -100,6 +100,7 @@ void get_d20(int fd)
     // IMPLEMENT ME! //
     ///////////////////
 
+    // TODO: Make this result less skewed
     srand(time(NULL));
     int r = rand() % 20;
     char rand_num[3];
@@ -170,16 +171,15 @@ void get_file(int fd, struct cache *cache, char *request_path)
     filedata = file_load(filepath);
     if (filedata == NULL)
     {
-        // TODO: make this non-fatal
-        fprintf(stderr, "cannot find system 404 file\n");
-        exit(3);
+        fprintf(stderr, "cannot find file \"%s\"\n", request_path);
+        resp_404(fd);
     }
-
-    mime_type = mime_type_get(filepath);
-
-    send_response(fd, header, mime_type, filedata->data, filedata->size);
-
-    file_free(filedata);
+    else
+    {
+        mime_type = mime_type_get(filepath);
+        send_response(fd, header, mime_type, filedata->data, filedata->size);
+        file_free(filedata);
+    }
 }
 
 /**
@@ -222,8 +222,8 @@ void handle_http_request(int fd, struct cache *cache)
 
     // Read the first two components of the first line of the request
     char method[16];
-    char path[2000];
-    sscanf(request, "%s %s", method, path);
+    char uri_path[2000];
+    sscanf(request, "%s %s", method, uri_path);
 
     // printf("\nMethod: %s\n", method);
     // printf("Path: %s\n", path);
@@ -231,7 +231,7 @@ void handle_http_request(int fd, struct cache *cache)
     // If GET, handle the get endpoints
     if (strcmp(method, "GET") == 0)
     {
-        if (strcmp(path, "/d20") == 0)
+        if (strcmp(uri_path, "/d20") == 0)
         {
             // Check if it's /d20 and handle that special case
             get_d20(fd);
@@ -239,10 +239,11 @@ void handle_http_request(int fd, struct cache *cache)
         else
         {
             // Otherwise serve the requested file by calling get_file()
-            get_file(fd, cache, path);
+            get_file(fd, cache, uri_path);
         }
     }
-    // TODO: POST
+    // TODO: else if POST
+    // else if (strcmp(method, "POST") == 0) {}
     else
     {
         resp_404(fd);
