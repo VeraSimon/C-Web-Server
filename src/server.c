@@ -50,8 +50,7 @@
  */
 int send_response(int fd, char *header, char *content_type, void *body, int content_length)
 {
-    // const int max_response_size = 262144;
-    const int max_response_size = 65535;
+    const int max_response_size = 262144;
     char response[max_response_size];
 
     // Build HTTP response and store it in response
@@ -67,19 +66,21 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
     time(&uet);
     time_info = localtime(&uet);
 
-    int response_length =
+    int header_length =
         sprintf(response,
                 "%s\n"
                 "Date: %s"
                 "Connection: close\n"
                 "Content-Length: %i\n"
                 "Content-Type: %s\n"
-                "\n"
-                "%s",
-                header, asctime(time_info), content_length, content_type, body_content);
+                "\n",
+                header, asctime(time_info), content_length, content_type);
+
+    printf("Response header: %s\n", response);
+    memcpy(response + header_length, body_content, content_length);
 
     // Send it all!
-    int rv = send(fd, response, response_length, 0);
+    int rv = send(fd, response, header_length + content_length, 0);
 
     if (rv < 0)
     {
