@@ -150,6 +150,7 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
     dllist_insert_head(cache, new_cache_entry);
 
     // * Store the entry in the hashtable as well, indexed by the entry's `path`.
+    // TODO: Do we need the returned data from this for anything?
     hashtable_put(cache->index, path, new_cache_entry);
 
     // * Increment the current size of the cache.
@@ -161,6 +162,7 @@ void cache_put(struct cache *cache, char *path, char *content_type, void *conten
         //     * Remove the cache entry at the tail of the linked list.
         struct cache_entry *popped_entry = dllist_remove_tail(cache);
         //     * Remove that same entry from the hashtable, using the entry's `path` and the `hashtable_delete` function.
+        // TODO: Do we need the returned data from this for anything?
         hashtable_delete(cache->index, path);
         //     * Free the cache entry.
         free_entry(popped_entry);
@@ -177,4 +179,19 @@ struct cache_entry *cache_get(struct cache *cache, char *path)
     ///////////////////
     // IMPLEMENT ME! //
     ///////////////////
+
+    // * Attempt to find the cache entry pointer by `path` in the hash table.
+    struct cache_entry *retrieved_entry = hashtable_get(cache->index, path);
+    // * If not found, return `NULL`.
+    if (retrieved_entry == NULL)
+    {
+        return NULL;
+    }
+    else
+    {
+        // * Move the cache entry to the head of the doubly-linked list.
+        dllist_move_to_head(cache, retrieved_entry);
+        // * Return the cache entry pointer.
+        return retrieved_entry;
+    }
 }
