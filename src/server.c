@@ -159,8 +159,6 @@ void get_file(int fd, struct cache *cache, char *request_path)
     // IMPLEMENT ME! //
     ///////////////////
 
-    // TODO: Check the cache for the path
-
     char filepath[4096];
     struct file_data *filedata;
     snprintf(filepath, sizeof filepath, "%s%s", SERVER_ROOT, request_path);
@@ -168,20 +166,31 @@ void get_file(int fd, struct cache *cache, char *request_path)
     printf("Server root: %s\n", SERVER_ROOT);
     printf("File path: %s\n", filepath);
 
-    char *mime_type;
+    char *mime_type = mime_type_get(filepath);
+    printf("Mime type: %s\n\n", mime_type);
 
-    filedata = file_load(filepath);
-    if (filedata == NULL)
+    struct cache_entry *cache_query = cache_get(cache, filepath);
+
+    if (cache_query != NULL)
     {
-        fprintf(stderr, "cannot find file \"%s\"\n\n", request_path);
-        resp_404(fd);
+        printf("Cache hit!\n");
+        send_response(fd, "HTTP/1.1 200 OK", cache_query->content_type, cache_query->content, cache_query->content_length);
     }
     else
     {
-        mime_type = mime_type_get(filepath);
-        printf("Mime type: %s\n\n", mime_type);
-        send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
-        file_free(filedata);
+        printf("Cache miss!\n");
+        filedata = file_load(filepath);
+        if (filedata != NULL)
+        {
+            send_response(fd, "HTTP/1.1 200 OK", mime_type, filedata->data, filedata->size);
+            cache_put(cache, filepath, mime_type, filedata->data, filedata->size);
+            file_free(filedata);
+        }
+        else
+        {
+            fprintf(stderr, "cannot find file \"%s\"\n\n", request_path);
+            resp_404(fd);
+        }
     }
 }
 
