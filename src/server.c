@@ -102,7 +102,6 @@ void get_d20(int fd)
     ///////////////////
 
     // TODO: Make this result less skewed
-    srand(time(NULL));
     int r = rand() % 20;
     char rand_num[3];
 
@@ -246,10 +245,12 @@ void handle_http_request(int fd, struct cache *cache)
             get_file(fd, cache, uri_path);
         }
     }
-    // TODO: else if POST
+    // TODO: (stretch) else if POST
     // else if (strcmp(method, "POST") == 0) {}
     else
     {
+        // Should be unreachable in normal circumstances, but in case of
+        // malformed, corrupted, or unimplemented requests or such.
         resp_404(fd);
     }
 }
@@ -259,6 +260,7 @@ void handle_http_request(int fd, struct cache *cache)
  */
 int main(void)
 {
+    srand(time(NULL));
     int newfd;                          // listen on sock_fd, new connection on newfd
     struct sockaddr_storage their_addr; // connector's address information
     char s[INET6_ADDRSTRLEN];
