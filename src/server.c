@@ -59,8 +59,6 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
     // IMPLEMENT ME! //
     ///////////////////
 
-    char *body_content = (char *)body;
-
     time_t uet;
     struct tm *time_info;
     time(&uet);
@@ -77,7 +75,7 @@ int send_response(int fd, char *header, char *content_type, void *body, int cont
                 header, asctime(time_info), content_length, content_type);
 
     printf("Response header: %s\n", response);
-    memcpy(response + header_length, body_content, content_length);
+    memcpy(response + header_length, body, content_length);
 
     // Send it all!
     int rv = send(fd, response, header_length + content_length, 0);
@@ -102,7 +100,7 @@ void get_d20(int fd)
     ///////////////////
 
     // TODO: Make this result less skewed
-    int r = rand() % 20;
+    int r = 1 + rand() % 20;
     char rand_num[3];
 
     if (r < 10)
